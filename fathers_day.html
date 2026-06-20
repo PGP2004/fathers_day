@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For Dad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14161d; --panel:#1d212b; --line:#2c313d;
+    --text:#ece7dc; --muted:#9b9789; --gold:#e0a94f;
+    --good:#83bd8a; --bad:#d97a6c;
+    --display:"Fraunces",Georgia,serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%,#1b1f29,var(--bg));
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .wrap{width:100%;max-width:640px}
+  /* card */
+  .card{background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:34px 30px;animation:rise .4s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .eyebrow{font:600 12px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+  h1{font-family:var(--display);font-weight:900;font-size:30px;line-height:1.15;margin:0 0 8px}
+  .prompt{font-family:var(--display);font-weight:400;font-size:21px;line-height:1.4;margin:0 0 22px}
+  p.lede{color:var(--muted);font-size:15px;line-height:1.55;margin:0 0 24px}
+  input[type=text]{width:100%;font:16px/1.4 var(--mono);color:var(--text);
+    background:#171a22;border:1px solid var(--line);border-radius:10px;
+    padding:14px 15px;outline:none}
+  input[type=text]:focus{border-color:var(--gold)}
+  .row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  button{font:600 15px/1 inherit;cursor:pointer;border-radius:10px;border:1px solid transparent;padding:13px 20px;transition:filter .15s}
+  button:hover{filter:brightness(1.08)}
+  .primary{background:var(--gold);color:#1b1206}
+  .ghost{background:transparent;border-color:var(--line);color:var(--muted)}
+  .feedback{min-height:20px;margin-top:14px;font-size:14px}
+  .feedback.bad{color:var(--bad)}
+  .feedback.good{color:var(--good)}
+  .hint{margin-top:10px;font-size:13px;color:var(--muted)}
+  .hint b{color:var(--text);font-weight:600}
+  /* final */
+  .pdfs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+  @media(max-width:560px){.pdfs{grid-template-columns:1fr}}
+  .pdfbox{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#171a22}
+  .pdfbox header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .pdfbox iframe{width:100%;height:360px;border:0;background:#fff;display:block}
+  a.minilink{color:var(--gold);font-size:13px;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="screen"></div>
+</div>
+
+<script>
+/* ===================================================================
+   EDIT EVERYTHING IN THIS BLOCK. Nothing below it needs touching.
+   =================================================================== */
+
+/* ---------- Opening screen ---------- */
+var intro_eyebrow = "Happy Father's Day";
+var intro_heading = "A few questions only you can answer.";
+var intro_text    = "Solve each one to unlock what's at the end. Take your time — there's no clock.";
+
+/* ---------- Questions ----------
+   Each question needs a matching check function.
+   To ADD one: copy a block and bump the number (question_4 +
+   check_question_4, ...). Number them 1, 2, 3... with NO gaps.
+   check_question_N(s) receives the typed text as `s` and returns
+   true when the answer is correct. Set a hint to "" for no hint.
+*/
+
+var question_1 = "What did we always order at the diner on Sunday mornings?";
+var hint_1     = "Two words.";
+function check_question_1(s){
+  // exact answer, ignoring capitalisation and extra spaces
+  return s.trim().toLowerCase().replace(/\s+/g, " ") === "a";
+}
+
+var question_2 = "Type the name of the street where I grew up.";
+var hint_2     = "Starts with M.";
+function check_question_2(s){
+  // true if this word appears anywhere, any capitalisation
+  return s.trim().toLowerCase().replace(/\s+/g, " ") === "a";
+}
+
+var question_3 = "What four-digit year did you teach me to ride a bike?";
+var hint_3     = "Early 2000s.";
+function check_question_3(s){
+  // true if the typed number falls in a range
+  return s.trim().toLowerCase().replace(/\s+/g, " ") === "a";
+}
+
+/* ---------- Closing screen ---------- */
+var final_heading = "You solved them all.";
+var final_text    = "Here's what was waiting at the end.";
+
+/* ---------- The two PDFs (filenames must match the files in this folder) ---------- */
+var pdf_left        = "gift1.pdf";
+var pdf_left_title  = "A letter";
+var pdf_right       = "gift2.pdf";
+var pdf_right_title = "A letter";
+
+/* ===================================================================
+   ENGINE — no need to edit anything below this line.
+   =================================================================== */
+
+// Gather question_1, question_2, ... into the list the app runs on.
+var puzzles = [];
+for (var qi = 1; window["question_" + qi] !== undefined; qi++){
+  puzzles.push({
+    prompt: window["question_" + qi],
+    hint:   window["hint_" + qi] || "",
+    check:  window["check_question_" + qi]
+  });
+}
+const screen = document.getElementById("screen");
+let i = -1; // -1 intro, 0..n-1 puzzles, n final
+
+function intro(){
+  screen.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">${intro_eyebrow}</div>
+      <h1>${intro_heading}</h1>
+      <p class="lede">${intro_text}</p>
+      <div class="row"><button class="primary" id="start">Begin</button></div>
+    </div>`;
+  document.getElementById("start").onclick = () => { i = 0; puzzle(); };
+}
+
+function puzzle(){
+  const p = puzzles[i];
+  screen.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">Puzzle ${i+1} of ${puzzles.length}</div>
+      <p class="prompt">${p.prompt}</p>
+      <input type="text" id="answer" autocomplete="off" autofocus placeholder="type your answer">
+      <div class="row">
+        <button class="primary" id="submit">Check</button>
+        ${p.hint ? `<button class="ghost" id="hintbtn">Hint</button>` : ``}
+      </div>
+      <div class="feedback" id="fb"></div>
+      ${p.hint ? `<div class="hint" id="hint" style="display:none"><b>Hint:</b> ${p.hint}</div>` : ``}
+    </div>`;
+
+  const input = document.getElementById("answer");
+  const fb = document.getElementById("fb");
+  input.focus();
+
+  function submit(){
+    let ok = false;
+    try { ok = !!puzzles[i].check(input.value); } catch(e){ ok = false; }
+    if(ok){
+      fb.className = "feedback good";
+      fb.textContent = "Correct.";
+      setTimeout(()=>{ i++; i < puzzles.length ? puzzle() : final(); }, 550);
+    } else {
+      fb.className = "feedback bad";
+      fb.textContent = "Not quite — try again.";
+      input.select();
+    }
+  }
+  document.getElementById("submit").onclick = submit;
+  input.addEventListener("keydown", e => { if(e.key === "Enter") submit(); });
+  if(p.hint) document.getElementById("hintbtn").onclick = () =>
+    document.getElementById("hint").style.display = "block";
+}
+
+function final(){
+  screen.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">Unlocked</div>
+      <h1>${final_heading}</h1>
+      <p class="lede">${final_text}</p>
+      <div class="pdfs">
+        ${pdfBox("L", pdf_left, pdf_left_title)}
+        ${pdfBox("R", pdf_right, pdf_right_title)}
+      </div>
+    </div>`;
+}
+
+function pdfBox(side, src, title){
+  return `<div class="pdfbox">
+    <header><span>${title}</span><a class="minilink" href="${src}" target="_blank">Open ↗</a></header>
+    <iframe id="frame${side}" src="${src}"></iframe>
+  </div>`;
+}
+
+intro();
+</script>
+</body>
+</html>

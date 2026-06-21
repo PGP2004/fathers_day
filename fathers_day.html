@@ -51,7 +51,7 @@
   @media(max-width:560px){.pdfs{grid-template-columns:1fr}}
   .pdfbox{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#171a22}
   .pdfbox header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
-  .pdfbox iframe{width:100%;height:360px;border:0;background:#fff;display:block}
+  .pdfbox iframe{width:100%;height:520px;border:0;background:#fff;display:block}
   a.minilink{color:var(--gold);font-size:13px;text-decoration:none}
 </style>
 </head>
@@ -66,47 +66,84 @@
    =================================================================== */
 
 /* ---------- Opening screen ---------- */
-var intro_eyebrow = "Happy Father's Day";
-var intro_heading = "A few questions only you can answer.";
-var intro_text    = "Solve each one to unlock what's at the end. Take your time — there's no clock.";
+var intro_eyebrow = "";
+var intro_heading = "Feliz Día del Padre!";
+var intro_text    = "Tenemos algo que te queremos dar. Pero primero necesitamos hacerte algunas preguntas para verificar tu identidad.";
+
+/* ---------- Lenient answer matching ----------
+   Answers are checked ignoring case, accents, spaces, and punctuation,
+   and allowing a few typos (~1 mistake per 5 characters). Use
+   lenient("the answer") as the check for a question.
+*/
+function normalize(s){
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "") // strip accents
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "");                       // drop spaces + punctuation
+}
+function levenshtein(a, b){
+  const m = a.length, n = b.length;
+  const d = Array.from({length: m + 1}, (_, r) => [r, ...Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let r = 1; r <= m; r++)
+    for (let c = 1; c <= n; c++)
+      d[r][c] = Math.min(d[r-1][c] + 1, d[r][c-1] + 1,
+                         d[r-1][c-1] + (a[r-1] === b[c-1] ? 0 : 1));
+  return d[m][n];
+}
+function lenient(answer){
+  const target = normalize(answer);
+  const tol = Math.max(1, Math.floor(target.length / 5));
+  return s => levenshtein(normalize(s), target) <= tol;
+}
 
 /* ---------- Questions ----------
-   Each question needs a matching check function.
-   To ADD one: copy a block and bump the number (question_4 +
-   check_question_4, ...). Number them 1, 2, 3... with NO gaps.
-   check_question_N(s) receives the typed text as `s` and returns
-   true when the answer is correct. Set a hint to "" for no hint.
+   The blank ______ is where the answer goes. Set a hint to "" for none.
 */
 
-var question_1 = "What did we always order at the diner on Sunday mornings?";
-var hint_1     = "Two words.";
-function check_question_1(s){
-  // exact answer, ignoring capitalisation and extra spaces
-  return s.trim().toLowerCase().replace(/\s+/g, " ") === "a";
-}
+var question_1 = "Portland Trail Blazers right fricking now ______";
+var hint_1     = "";
+var check_question_1 = s => lenient("mufaka")(s) || lenient("motherfucker")(s) || lenient("mf")(s);
 
-var question_2 = "Type the name of the street where I grew up.";
-var hint_2     = "Starts with M.";
-function check_question_2(s){
-  // true if this word appears anywhere, any capitalisation
-  return s.trim().toLowerCase().replace(/\s+/g, " ") === "a";
-}
+var question_2 = "Pase lo que pase ______";
+var hint_2     = "";
+var check_question_2 = lenient("que no sea gol");
 
-var question_3 = "What four-digit year did you teach me to ride a bike?";
-var hint_3     = "Early 2000s.";
-function check_question_3(s){
-  // true if the typed number falls in a range
-  return s.trim().toLowerCase().replace(/\s+/g, " ") === "a";
-}
+var question_3 = "______ Engineer";
+var hint_3     = "";
+var check_question_3 = s => lenient("10 x")(s) || lenient("ten x")(s);
+
+var question_4 = "Ese comentario ______";
+var hint_4     = "";
+var check_question_4 = lenient("que aporta");
+
+var question_5 = "Es ______ chicos";
+var hint_5     = "";
+var check_question_5 = lenient("sabadabado");
+
+var question_6 = "Buh-Buh-Buh ______ !!!!";
+var hint_6     = "";
+var check_question_6 = lenient("Bull");
+
+var question_7 = "Primero que nada ______";
+var hint_7     = "";
+var check_question_7 = lenient("buenos dílas");
+
+var question_8 = "¿Cómo se llamaba el juego que jugábamos en la alberca? ______";
+var hint_8     = "";
+var check_question_8 = lenient("Chimeco");
+
+var question_9 = "Jonny Magallón y ______";
+var hint_9     = "";
+var check_question_9 = lenient("Miguel Sabah");
 
 /* ---------- Closing screen ---------- */
 var final_heading = "You solved them all.";
 var final_text    = "Here's what was waiting at the end.";
 
 /* ---------- The two PDFs (filenames must match the files in this folder) ---------- */
-var pdf_left        = "gift1.pdf";
+var pdf_left        = "letter_1.pdf";
 var pdf_left_title  = "A letter";
-var pdf_right       = "gift2.pdf";
+var pdf_right       = "letter_2.pdf";
 var pdf_right_title = "A letter";
 
 /* ===================================================================
@@ -140,7 +177,6 @@ function puzzle(){
   const p = puzzles[i];
   screen.innerHTML = `
     <div class="card">
-      <div class="eyebrow">Puzzle ${i+1} of ${puzzles.length}</div>
       <p class="prompt">${p.prompt}</p>
       <input type="text" id="answer" autocomplete="off" autofocus placeholder="type your answer">
       <div class="row">
@@ -177,9 +213,6 @@ function puzzle(){
 function final(){
   screen.innerHTML = `
     <div class="card">
-      <div class="eyebrow">Unlocked</div>
-      <h1>${final_heading}</h1>
-      <p class="lede">${final_text}</p>
       <div class="pdfs">
         ${pdfBox("L", pdf_left, pdf_left_title)}
         ${pdfBox("R", pdf_right, pdf_right_title)}
@@ -189,7 +222,6 @@ function final(){
 
 function pdfBox(side, src, title){
   return `<div class="pdfbox">
-    <header><span>${title}</span><a class="minilink" href="${src}" target="_blank">Open ↗</a></header>
     <iframe id="frame${side}" src="${src}"></iframe>
   </div>`;
 }
